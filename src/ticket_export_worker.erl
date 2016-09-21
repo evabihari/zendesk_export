@@ -120,7 +120,16 @@ handle_call({group_id_by_name,GroupName},_From,State) ->
 		GroupRec ->
 		    {ok,GroupRec#groups.id}
 	    end,
-    {reply,Result,State};    
+    {reply,Result,State}; 
+handle_call({group_name_by_id,GroupId},_From,State) ->
+    Groups=State#state.groups,
+    Result =case lists:keyfind(GroupId,#groups.id,Groups) of
+		false ->
+		    {error,not_found};
+		OrgRec ->
+		    {ok,OrgRec#groups.name}
+	    end,
+    {reply,Result,State};   
 
 handle_call(_Request, _From, State) ->
     Reply = ok,

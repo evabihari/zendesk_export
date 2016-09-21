@@ -1,6 +1,6 @@
--define(ZENDESK_URL,"https://esl1.zendesk.com/api/v2/").
--define(USER,"eva.bihari@erlang-solutions.com").
--define(PWD,"Support_1").
+-define(ZENDESK_URL,"XXXXXXXXXXXXX").
+-define(USER,"YYYYYYYYYYYYY").
+-define(PWD,"ZZZZZZZZZZZ").
 -define(DIR,"/tmp/").
 
 -record(groups,{

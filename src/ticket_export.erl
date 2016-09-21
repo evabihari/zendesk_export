@@ -91,6 +91,7 @@ pretty_print([]) ->
 pretty_print([Ticket|List]) ->
     % io:format("~p~n",[Ticket]),
     Id=Ticket#tickets.id,
+    GroupId=Ticket#tickets.group_id,
     OrgId=Ticket#tickets.organization_id,
     % io:format("OrgId=~p, TicketId=~p, Ticket=~p ~n",[OrgId, Id, Ticket]),
     case {OrgId,Ticket#tickets.status} of
@@ -102,7 +103,8 @@ pretty_print([Ticket|List]) ->
 	    do_nothing;
 	{Other,_S} when is_integer(Other) ->
 	    {ok,OrgName}=ticket_export_utils:get_org_name(OrgId),
-	    DirName=?DIR ++ OrgName++ "/"++ string:right(integer_to_list(Id), 4, $0),
+	    {ok,GroupName}=ticket_export_utils:get_group_name(GroupId),
+	    DirName=?DIR ++ GroupName ++ "/" ++ OrgName++ "/"++ string:right(integer_to_list(Id), 4, $0),
 	    filelib:ensure_dir(DirName++"/a"),  %% make sure all subdirectory exist, if not it will be created
 	    {ok,Json}=tickets:encode(Ticket),
 	    Pretty=jsx:prettify(Json),

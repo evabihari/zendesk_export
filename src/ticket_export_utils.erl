@@ -15,6 +15,7 @@
 	 request_download/2,
 	 get_groups/0,
 	 get_group_id/1,
+	 get_group_name/1,
 	 get_organizations/0,
 	 get_org_id/1,
 	 get_org_name/1,
@@ -102,7 +103,8 @@ get_org_name(Org_Id) ->
     gen_server:call(ticket_export_worker,{org_name_by_id,Org_Id}).
 get_group_id(GroupName) ->
     gen_server:call(ticket_export_worker,{group_id_by_name,GroupName}).
-
+get_group_name(Group_Id) ->
+    gen_server:call(ticket_export_worker,{group_name_by_id,Group_Id}).
 
 get_tickets_by_group(GroupId) when is_integer(GroupId) ->
     gen_server:call(ticket_export_worker,{tickets_by_group,GroupId});
