@@ -1,0 +1,12 @@
+{application, ticket_export,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { ticket_export_app, []}},
+  {env, []}
+ ]}.
