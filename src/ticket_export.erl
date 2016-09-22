@@ -42,6 +42,8 @@ start1() ->
 start(Group) ->
     {ok,Groups}=ticket_export_utils:get_groups(),
     gen_server:cast(ticket_export_worker,{groups,Groups}),
+    {ok,Users}=ticket_export_utils:get_users(),
+    gen_server:cast(ticket_export_worker,{users,Users}),
     {ok,Orgs}  =ticket_export_utils:get_organizations(),
     gen_server:cast(ticket_export_worker,{orgs,Orgs}),
     {ok,Tickets} = ticket_export_utils:get_all_tickets(),
@@ -104,14 +106,21 @@ pretty_print([Ticket|List]) ->
 	{Other,_S} when is_integer(Other) ->
 	    {ok,OrgName}=ticket_export_utils:get_org_name(OrgId),
 	    {ok,GroupName}=ticket_export_utils:get_group_name(GroupId),
-	    DirName=?DIR ++ GroupName ++ "/" ++ OrgName++ "/"++ string:right(integer_to_list(Id), 4, $0),
-	    filelib:ensure_dir(DirName++"/a"),  %% make sure all subdirectory exist, if not it will be created
-	    {ok,Json}=tickets:encode(Ticket),
+	    DirName=?DIR ++ GroupName ++ "/" ++ OrgName++ "/"++ 
+		     string:right(integer_to_list(Id), 4, $0),
+	    filelib:ensure_dir(DirName++"/a"),  
+	    %% make sure all subdirectory exist, if not it will be created
+	    RequesterId=Ticket#tickets.requester_id,
+	    {ok,Requester}=ticket_export_utils:find_name_by_id(RequesterId),
+	    SubmitterId=Ticket#tickets.submitter_id,
+	    {ok,Submitter}=ticket_export_utils:find_name_by_id(SubmitterId),
+	    Ticket1=Ticket#tickets{submitter=Submitter,
+				   requester=Requester},
+	    {ok,Json}=tickets:encode(Ticket1),
 	    Pretty=jsx:prettify(Json),
-						% io:format("~s~n",[Pretty]),
-	    {ok,Comments}=ticket_export_utils:get_ticket_comments(Ticket#tickets.id),
+	    {ok,Comments}=ticket_export_utils:get_ticket_comments(Ticket1#tickets.id),
 	    _PrettyComments=pretty_print_comments(Comments),
-	    write_to_file(Ticket,Pretty,Comments,DirName)
+	    write_to_file(Ticket1,Pretty,Comments,DirName)
     end,
     pretty_print(List).
 
@@ -139,7 +148,10 @@ add_comments([],_N,_D) ->
 add_comments([Comment|List],N,DirName) ->
     Name=DirName ++ string:right(integer_to_list(N), 4, $0)++".comment",
     {ok,File}=file:open(Name, [write]),    
-    io:format(File,"-----BEGINNING OF COMMENT-----",[]),
+    Author_id=Comment#comment.author_id,
+    {ok,Author}=ticket_export_utils:find_name_by_id(Author_id),
+    io:format(File,"-----BEGINNING OF COMMENT-----~n",[]),
+    io:format(File,"author : ~p~n",[Author]),
     io:format(File,"created_at : ~s~n",[Comment#comment.created_at]),
     io:format(File,"Public? : ~p~n",[Comment#comment.public]),
     io:format(File,"Attachments: ~p~n",[Comment#comment.attachments]),

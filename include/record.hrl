@@ -1,6 +1,6 @@
--define(ZENDESK_URL,"XXXXXXXXXXXXX").
--define(USER,"YYYYYYYYYYYYY").
--define(PWD,"ZZZZZZZZZZZ").
+-define(ZENDESK_URL,"XXXXXX").
+-define(USER,"XXXXXX").
+-define(PWD,"XXXXXX").
 -define(DIR,"/tmp/").
 
 -record(groups,{
@@ -27,7 +27,9 @@
 	  status,
 	  recipient,
 	  requester_id,
+	  requester,
 	  submitter_id,
+	  submitter,
 	  assignee_id,
 	  organization_id,
 	  group_id,
@@ -82,3 +84,12 @@
 	details,
 	notes,
 	group_id}).
+
+-record(users, {id,
+	       email,
+	       name,
+	       role,
+	       active = false,
+	       organization_id}).
+	       
+	  

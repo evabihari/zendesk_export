@@ -13,6 +13,7 @@
 %% API
 -export([read_tickets/0,
 	 request_download/2,
+	 get_users/0,
 	 get_groups/0,
 	 get_group_id/1,
 	 get_group_name/1,
@@ -24,7 +25,8 @@
 	 get_all_tickets/0,
 	 get_ticket_comments/1,
 	 collect/2,
-	 get_attachment/2]).
+	 get_attachment/2,
+	 find_name_by_id/1]).
 
 %%%===================================================================
 %%% API
@@ -47,14 +49,30 @@ get_groups() ->
 	    get_organizations();    
     {ok,Body} ->
 	{Groups,_Count}=decode(list_to_binary("groups"), Body),
-	    [G|_]=Groups,
-	    % io:format("Response groups: ~p~n",[G]),
+	    [_G|_]=Groups,
+	    % io:format("Response groups: ~p~n",[_G]),
 	OrgRecords=collect(groups,Groups),
 	{ok, OrgRecords};
 	Other  ->
 	    io:format("request failed due to ~p ~n",[Other])
      end.
 
+get_users() ->
+    Url=?ZENDESK_URL++"users.json",
+    case request(Url) of
+	{error,{error, timeout}} ->
+	    io:format("request failed due to timeout, try again ~n",[]),
+	    timer:sleep(30000),
+	    get_users();    
+    {ok,Body} ->
+	{Users,_Count}=decode(list_to_binary("users"), Body),
+	    [_U|_]=Users,
+	    % io:format("Response users: ~p~n",[_U]),
+	UserRecords=collect(users,Users),
+	{ok, UserRecords};
+	Other  ->
+	    io:format("request failed due to ~p ~n",[Other])
+     end.    
 
 get_organizations() ->
     Url=?ZENDESK_URL++"organizations.json",
@@ -65,8 +83,8 @@ get_organizations() ->
 	    get_organizations();    
     {ok,Body} ->
 	{Orgs,_Count}=decode(list_to_binary("organizations"), Body),
-	    [O|_]=Orgs,
-	   % io:format("Response organizations: ~p~n",[O]),
+	    [_O|_]=Orgs,
+	   % io:format("Response organizations: ~p~n",[_O]),
 	OrgRecords=collect(organization,Orgs),
 	{ok, OrgRecords};
 	Other  ->
@@ -111,6 +129,8 @@ get_tickets_by_group(GroupId) when is_integer(GroupId) ->
 get_tickets_by_group(GroupName) ->
      {ok,Id} = get_group_id(GroupName),
      get_tickets_by_group(Id).   
+find_name_by_id(Id) ->
+     gen_server:call(ticket_export_worker,{get_name_by_id,Id}).
 
     
 %%%===================================================================
@@ -142,7 +162,8 @@ get_auth_header() ->
 decode(Type, Body) ->
     Struct=mochijson2:decode(Body),
     {struct,TypeStruct}=Struct,
-    [{Type,Items},T1,T2,T3]=TypeStruct,    
+    [{Type1,Items},T1,T2,T3]=TypeStruct,
+   
     CountField= <<"count">>,
     Count = case lists:keyfind(CountField,1,[T1,T2,T3]) of
 	{CountField,Value} ->

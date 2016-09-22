@@ -24,6 +24,7 @@
 -record(state, {tickets=[],
 	        orgs=[],
 		groups=[],
+		users=[],
 	        group_id,
 	        ongoing_download=0}).
 
@@ -130,7 +131,15 @@ handle_call({group_name_by_id,GroupId},_From,State) ->
 		    {ok,OrgRec#groups.name}
 	    end,
     {reply,Result,State};   
-
+handle_call({get_name_by_id,Id},_From,State) ->
+    Users=State#state.users,
+    Result =case lists:keyfind(Id, #users.id,Users) of
+		false ->
+		    {ok,"NotKnown"};
+		UserRec ->
+		    {ok,UserRec#users.name}
+	    end,
+    {reply,Result,State};   
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -151,6 +160,8 @@ handle_cast({orgs,Orgs}, State) ->
     {noreply, State#state{orgs=Orgs}};
 handle_cast({groups,Groups}, State) ->
     {noreply, State#state{groups=Groups}};
+handle_cast({users,Users}, State) ->
+    {noreply, State#state{users=Users}};
 handle_cast({group_id,{Group,Group_id}}, State) ->
     {noreply, State#state{group_id={Group,Group_id}}};
 handle_cast({download_attachment,{Url,TargetFile}}, State) ->
