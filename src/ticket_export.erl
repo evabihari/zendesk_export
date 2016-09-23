@@ -129,8 +129,6 @@ pretty_print_comments([]) ->
 pretty_print_comments([Comment|List]) ->
     {ok,Json}=comment:encode(Comment),
     Pretty=jsx:prettify(Json),
-    % io:format("~s~n",[Pretty]),
-%    io:format("~p~n",[Json]),
     [Pretty|pretty_print_comments(List)].
 	    
 write_to_file(Ticket, PTicket,Comments,DirName) ->
@@ -138,8 +136,9 @@ write_to_file(Ticket, PTicket,Comments,DirName) ->
     IdName=string:right(integer_to_list(Id), 4, $0),
     TName=DirName++"/"++IdName,
     Name=TName++".txt",
-    {ok,File}=file:open(Name, [write]),
-    io:format(File,"~s~n",[PTicket]),
+    {ok,File}=file:open(Name, [write,{encoding,utf8}]),
+%    io:format(File,"~s~n",[PTicket]),
+    write_ticket(File,Ticket),
     file:close(File),
     add_comments(Comments,1,DirName++"/").
 
@@ -147,16 +146,16 @@ add_comments([],_N,_D) ->
     ok;
 add_comments([Comment|List],N,DirName) ->
     Name=DirName ++ string:right(integer_to_list(N), 4, $0)++".comment",
-    {ok,File}=file:open(Name, [write]),    
+    {ok,File}=file:open(Name, [write,{encoding,utf8}]),    
     Author_id=Comment#comment.author_id,
     {ok,Author}=ticket_export_utils:find_name_by_id(Author_id),
-    io:format(File,"-----BEGINNING OF COMMENT-----~n",[]),
-    io:format(File,"author : ~p~n",[Author]),
+    io:format(File,"author : ~ts~n",[Author]),
     io:format(File,"created_at : ~s~n",[Comment#comment.created_at]),
     io:format(File,"Public? : ~p~n",[Comment#comment.public]),
     io:format(File,"Attachments: ~p~n",[Comment#comment.attachments]),
-    io:format(File,"Body: ~p~n",[Comment#comment.body]),
-    io:format(File,"-----END OF COMMENT-----",[]),
+    io:format(File,"Body: ---------------- ~n",[]),
+    Formatted=io_lib:format("~ts~n",[Comment#comment.body]),
+    file:write_file(Name,Formatted,[append]),
     file:close(File),
     case Comment#comment.attachments of
 	[] -> ok;
@@ -177,3 +176,37 @@ download_attachments([Attachment|List],CommentNbr,AttachNbr,DirName) ->
 
 
 
+write_ticket(File,Ticket)->
+    io:format(File,"url: ~s~n",[Ticket#tickets.url]),
+    io:format(File,"id: ~p~n",[Ticket#tickets.id]),
+    io:format(File,"external_id: ~p~n",[Ticket#tickets.external_id]),
+    io:format(File,"created_at: ~p~n",[Ticket#tickets.created_at]),
+    io:format(File,"updated_at: ~p~n",[Ticket#tickets.updated_at]),
+    io:format(File,"type: ~p~n",[Ticket#tickets.type]),
+    io:format(File,"subject: ~ts~n",[Ticket#tickets.subject]),
+    io:format(File,"description: ~ts~n~n",[Ticket#tickets.description]),
+    io:format(File,"priority: ~s~n",[Ticket#tickets.priority]),
+    io:format(File,"status: ~s~n",[Ticket#tickets.status]),
+    io:format(File,"recipient: ~p~n",[Ticket#tickets.recipient]),
+    io:format(File,"requester_id: ~p~n",[Ticket#tickets.requester_id]),
+    io:format(File,"requester: ~ts~n",[Ticket#tickets.requester]),
+    io:format(File,"submitter_id: ~p~n",[Ticket#tickets.submitter_id]),
+    io:format(File,"submitter: ~ts~n",[Ticket#tickets.submitter]),
+    io:format(File,"assignee_id: ~p~n",[Ticket#tickets.status]),
+    io:format(File,"organization_id: ~p~n",[Ticket#tickets.organization_id]),
+    io:format(File,"group_id: ~p~n",[Ticket#tickets.group_id]),
+    io:format(File,"collaborator_ids: ~p~n",[Ticket#tickets.collaborator_ids]),
+    io:format(File,"forum_topic_id: ~p~n",[Ticket#tickets.forum_topic_id]),
+    io:format(File,"problem_id: ~p~n",[Ticket#tickets.problem_id]),
+    io:format(File,"has_incidents: ~p~n",[Ticket#tickets.has_incidents]),
+    io:format(File,"is_public: ~p~n",[Ticket#tickets.is_public]),
+    io:format(File,"due_at: ~p~n",[Ticket#tickets.due_at]),
+    io:format(File,"tags: ~p~n",[generate_string(Ticket#tickets.tags)]),
+    io:format(File,"custom_fields: ~p~n",[Ticket#tickets.custom_fields]),
+    io:format(File,"satisfaction_rating: ~p~n",[Ticket#tickets.satisfaction_rating]),
+    io:format(File,"fields: ~p~n",[Ticket#tickets.fields]).
+    
+generate_string([]) ->
+    [];
+generate_string([H|T]) ->
+    H++","++generate_string(T).
